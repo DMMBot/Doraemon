@@ -11,7 +11,7 @@ from nonebot.adapters.onebot.v11.message import MessageSegment, Message
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 
-from .config import global_config
+from .config import global_config, plugin_config
 from .utils import At, banSb, log_finish, finish, parse_time_input
 
 su = global_config.superusers
@@ -60,6 +60,7 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
     """
     # 提取消息中所有数字作为禁言时间
     time = parse_time_input(event.json())
+    scope = (plugin_config.ban_rand_time_min, plugin_config.ban_rand_time_max)
     # 获取操作对象
     sb = At(event.json())
 
@@ -67,8 +68,12 @@ async def _(bot: Bot, matcher: Matcher, event: GroupMessageEvent):
         await finish(matcher, "未选中需要操作的用户")
 
     try:
-        async for baned in banSb(bot, event.group_id, ban_list=sb, time=time):
-            await baned if baned else None
+        if time is None:
+            async for baned in banSb(bot, event.group_id, ban_list=sb, scope=scope):
+                await baned if baned else None
+        else:
+            async for baned in banSb(bot, event.group_id, ban_list=sb, time=time):
+                await baned if baned else None
         await finish(matcher, '禁言操作成功' if time is not None else '参数错误或未填，用户已被禁言随机时长')
     except ActionFailed:
         await finish(matcher, '权限不足')

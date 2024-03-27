@@ -13,18 +13,17 @@ from nonebot.adapters.onebot.v11.permission import GROUP_ADMIN, GROUP_OWNER
 from nonebot.internal.matcher import Matcher
 from nonebot.params import CommandArg
 from nonebot.permission import SUPERUSER
-from nonebot.typing import T_State
 
 from .path import admin_funcs, switcher_path, default_disabled_func
 from .utils import json_load, json_upload, finish
 
-switcher = on_command(
-    '开关', priority=1, block=True,
+oepn = on_command(
+    '开启', priority=1, block=True,
     permission=GROUP_OWNER | GROUP_ADMIN | SUPERUSER
 )
 
 
-@switcher.handle()
+@oepn.handle()
 async def _(
         bot: Bot, matcher: Matcher, event: GroupMessageEvent,
         args: Message = CommandArg()
@@ -32,11 +31,32 @@ async def _(
     gid = str(event.group_id)
     user_input_func_name = str(args)
     try:
-        await switcher_handle(gid, matcher, user_input_func_name)
+        await switcher_handle(gid, matcher, user_input_func_name, True)
     except KeyError:
         # 如果配置文件更新不及时引发了 KeyError 则检查配置文件
         await switcher_integrity_check(bot)
-        await switcher_handle(gid, matcher, user_input_func_name)
+        await switcher_handle(gid, matcher, user_input_func_name, True)
+
+
+off = on_command(
+    '关闭', priority=1, block=True,
+    permission=GROUP_OWNER | GROUP_ADMIN | SUPERUSER
+)
+
+
+@off.handle()
+async def _(
+        bot: Bot, matcher: Matcher, event: GroupMessageEvent,
+        args: Message = CommandArg()
+):
+    gid = str(event.group_id)
+    user_input_func_name = str(args)
+    try:
+        await switcher_handle(gid, matcher, user_input_func_name, False)
+    except KeyError:
+        # 如果配置文件更新不及时引发了 KeyError 则检查配置文件
+        await switcher_integrity_check(bot)
+        await switcher_handle(gid, matcher, user_input_func_name, False)
 
 
 async def switcher_integrity_check(bot: Bot):
@@ -65,19 +85,18 @@ async def switcher_integrity_check(bot: Bot):
     json_upload(switcher_path, switcher_dict)
 
 
-async def switcher_handle(gid: str, matcher: Matcher, func: str):
+async def switcher_handle(gid: str, matcher: Matcher, func: str, state):
     """
     设置群管功能函数
     """
     if func in admin_funcs:
         # 如果用户输入功能是插件功能,获取插件配置文件
         funcs_status = json_load(switcher_path)
-        # 自动切换功能状态,如果原有为开启则切换为关闭,反之
-        if funcs_status[gid][func]:
-            funcs_status[gid][func] = False
-            json_upload(switcher_path, funcs_status)
-            await finish(matcher, f'已关闭 {func}')
-        else:
-            funcs_status[gid][func] = True
+        if state:
+            funcs_status[gid][func] = state
             json_upload(switcher_path, funcs_status)
             await finish(matcher, f'已开启 {func}')
+        else:
+            funcs_status[gid][func] = state
+            json_upload(switcher_path, funcs_status)
+            await finish(matcher, f'已关闭 {func}')

@@ -2,22 +2,19 @@ import nonebot
 from nonebot import get_plugin_config
 from nonebot.plugin import PluginMetadata
 
-from . import (
-    admin,
-    requests,
-    switcher,
-    func_hook,
-)
 from .config import Config
 from .utils import init
 
+from . import (
+    meditationc
+)
+
 __plugin_meta__ = PluginMetadata(
-    name="GroupManagement",
-    description="基础群管",
+    name="Amuse",
+    description="机器人基础娱乐功能",
     usage='',
     config=Config,
 )
-
 
 config = get_plugin_config(Config)
 driver = nonebot.get_driver()

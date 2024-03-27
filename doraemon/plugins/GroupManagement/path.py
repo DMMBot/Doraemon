@@ -10,7 +10,7 @@ from typing import Dict, List
 用于存放所有群的相关配置文件路径,按照文件类型分类
 """
 
-config_path = Path() / 'config'  # 插件配置文件路径 - 一切的基础
+config_path = Path() / 'config/GM'  # 插件配置文件路径 - 一切的基础
 switcher_path = config_path / 'switch_config.json'  # 群配置开关
 requests_path = config_path / 'requests_config.json'  # 加群审核配置
 
